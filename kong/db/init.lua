@@ -18,6 +18,7 @@ local setmetatable = setmetatable
 -- to schemas and entities since schemas will also be used
 -- independently from the DB module (Admin API for GUI)
 local CORE_ENTITIES = {
+  "consumers",
   "services",
   "routes",
 }
@@ -73,6 +74,13 @@ function DB.new(kong_config, strategy)
 
   local daos = {}
 
+
+  local self   = {
+    daos       = daos,       -- each of those has the connector singleton
+    strategies = strategies,
+    connector  = connector,
+  }
+
   do
     -- load DAOs
 
@@ -82,17 +90,11 @@ function DB.new(kong_config, strategy)
         return nil, fmt("no strategy found for schema '%s'", schema.name)
       end
 
-      daos[schema.name] = DAO.new(schema, strategy, errors)
+      daos[schema.name] = DAO.new(self, schema, strategy, errors)
     end
   end
 
   -- we are 200 OK
-
-  local self   = {
-    daos       = daos,       -- each of those has the connector singleton
-    strategies = strategies,
-    connector  = connector,
-  }
 
   return setmetatable(self, DB)
 end
